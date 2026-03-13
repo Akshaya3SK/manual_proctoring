@@ -1,4 +1,4 @@
-hi akshaya
+
 # 📁 Project Setup
 
 ## 1. Create the Project Folder
