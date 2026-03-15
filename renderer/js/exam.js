@@ -1,108 +1,133 @@
-let time=0;
+// LOAD EXAM DATA
+async function loadExam() {
 
-window.onload=async function(){
+    try {
 
- await startCamera();
+        const response = await fetch("http://localhost:5000/exam");
+        const data = await response.json();
 
- startTimer();
- loadQuestions();
+        // start timer
+        startTimer(data.timer);
 
- window.electronAPI.startFullscreen();
+        // VIEW ONLY PDF (remove download + print toolbar)
+        const fileUrl = "http://localhost:5000/files/" + data.questionPaper + "#toolbar=0";
 
-}
+        document.getElementById("questionFrame").src = fileUrl;
 
+    } catch (error) {
 
-async function startCamera(){
+        console.error("Error loading exam:", error);
+        alert("Failed to load exam.");
 
- try{
-
- const stream=await navigator.mediaDevices.getUserMedia({
-  video:true,
-  audio:true
- });
-
- const video=document.getElementById("video");
-
- video.srcObject=stream;
-
- document.getElementById("status").innerText="Camera and Microphone Active";
-
- monitorStream(stream);
-
- }catch(err){
-
- document.getElementById("status").innerText="Camera or microphone not detected";
-
- }
+    }
 
 }
 
 
-function monitorStream(stream){
+// TIMER FUNCTION
+function startTimer(seconds) {
 
- stream.getVideoTracks()[0].onended=function(){
+    let time = seconds;
 
-  alert("Camera disabled!");
+    const timerElement = document.getElementById("timer");
 
- };
+    const interval = setInterval(() => {
 
- stream.getAudioTracks()[0].onended=function(){
+        let minutes = Math.floor(time / 60);
+        let sec = time % 60;
 
-  alert("Microphone disabled!");
+        if (minutes < 10) {
+            minutes = "0" + minutes;
+        }
 
- };
+        if (sec < 10) {
+            sec = "0" + sec;
+        }
+
+        timerElement.innerText = minutes + ":" + sec;
+
+        time--;
+if (time < 0) {
+
+    clearInterval(interval);
+
+    document.body.innerHTML = `
+        <div style="
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+            font-family:Arial;
+            background:#f4f6f9;
+        ">
+            <div style="
+                background:white;
+                padding:40px;
+                border-radius:10px;
+                box-shadow:0 4px 10px rgba(0,0,0,0.1);
+                text-align:center;
+            ">
+                <h1> Exam Completed</h1>
+                <p>Your exam has been submitted successfully.</p>
+            </div>
+        </div>
+    `;
+
+}
+    }, 1000);
 
 }
 
+async function startCamera() {
 
-function startTimer(){
+    try {
 
- setInterval(()=>{
+        const video = document.getElementById("video");
 
-  time++;
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+        });
 
-  document.getElementById("timer").innerText=time;
+        video.srcObject = stream;
 
- },1000);
+        video.onloadedmetadata = () => {
+            video.play();
+        };
 
-}
-async function loadQuestions(){
+    }
 
- const res = await fetch("http://localhost:5000/api/questions")
+    catch (error) {
 
- const questions = await res.json()
+        console.error("Camera error:", error);
+        alert("Please allow camera permission for the exam.");
 
- const container = document.getElementById("questionsContainer")
-
- container.innerHTML=""
-
- questions.forEach((q,index)=>{
-
-  const div = document.createElement("div")
-
-  div.classList.add("question")
-
-  let optionsHTML=""
-
-  q.options.forEach(option=>{
-
-   optionsHTML += `
-    <label>
-     <input type="radio" name="q${q.id}" value="${option}">
-     ${option}
-    </label><br>
-   `
-
-  })
-
-  div.innerHTML=`
-   <h4>Q${index+1}. ${q.question}</h4>
-   ${optionsHTML}
-   <hr>
-  `
-
-  container.appendChild(div)
-
- })
+    }
 
 }
+
+// Disable right click
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+// Disable copy
+document.addEventListener("copy", e => e.preventDefault());
+
+// Disable Print (Ctrl + P)
+document.addEventListener("keydown", function(e) {
+
+    if (e.ctrlKey && e.key === "p") {
+        e.preventDefault();
+        alert("Printing is disabled during exam");
+    }
+
+});
+
+
+// RUN AFTER PAGE LOAD
+window.onload = () => {
+
+    loadExam();
+    startCamera();
+    window.electronAPI.startFullscreen();
+
+};
