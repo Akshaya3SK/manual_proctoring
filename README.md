@@ -113,3 +113,10 @@ node server.js
 npm start
 
 
+### Inside application
+(Data values given in backend)
+# Email : asif@gmail.com
+# Password : 1234 
+
+
+
