@@ -60,6 +60,29 @@ app.get("/exam", (req, res) => {
     });
 });
 
+// EXAM VIOLATIONS/WARNINGS LOG
+app.post("/api/exam-warnings", (req, res) => {
+    const { violationType, timestamp, studentId, message } = req.body;
+    
+    // Log the violation
+    console.log(`[VIOLATION] Type: ${violationType}, Student: ${studentId}, Time: ${timestamp}, Message: ${message}`);
+    
+    // Store violation data (in a real app, save to database)
+    const violationLog = {
+        violationType,
+        timestamp,
+        studentId,
+        message,
+        recordedAt: new Date().toISOString()
+    };
+    
+    res.json({
+        success: true,
+        message: "Violation logged successfully",
+        data: violationLog
+    });
+});
+
 app.listen(5000, () => {
     console.log("Server running at http://localhost:5000");
 });
